@@ -80,7 +80,7 @@ def build(src_path, install=True):
         if install:
             if not os.path.exists(INSTALL_PATH):
                 os.mkdir(INSTALL_PATH)
-            sp.check_call(['make install'])
+            sp.check_call(['make', 'install'])
     except sp.CalledProcessError:
         print('Build failed.')
 
