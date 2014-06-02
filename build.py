@@ -31,6 +31,7 @@ def get_latest_sdk_path(platform):
     latest = sdks[-1].split()[-1]
     return sp.check_output(['xcodebuild', '-version', '-sdk', latest, 'Path']).strip()
 
+
 def setup_env_vars():
     os.environ['CC'] = CC_PATH
     os.environ['CXX'] = CXX_PATH
@@ -46,13 +47,14 @@ def setup_env_vars():
 def as_flag_defs(flag_map):
     return ['-D%s=%s'%(k,flag_map[k]) for k in flag_map]
 
-def get_compiler_flags():
-    return as_flag_defs({'EIGEN_INCLUDE_DIR': EIGEN_PATH
-                        ,'MINIGLOG': 1
+def get_c_flags():
+    return as_flag_defs({'MAX_LOG_LEVEL': -2 # Only log error and above.
                         })
 
 def get_cmake_flags():
-    return as_flag_defs({'CMAKE_TOOLCHAIN_FILE':CMAKE_TC_PATH
+    return as_flag_defs({'EIGEN_INCLUDE_DIR': EIGEN_PATH
+                        ,'MINIGLOG': 1
+                        ,'CMAKE_TOOLCHAIN_FILE':CMAKE_TC_PATH
                         ,'CMAKE_INSTALL_PREFIX':INSTALL_PATH
                         })
 
@@ -66,15 +68,17 @@ def build(src_path, install=True):
 
     # Configure
     setup_build_dir()
-    compiler_flags = get_compiler_flags()
-    cmake_flags = get_cmake_flags()
+    c_flags = ' '.join(get_c_flags())
+    os.environ['CFLAGS']    = c_flags
+    os.environ['CXXFLAGS']  = c_flags
 
     # No longer necessary - taken care of in the toolchain file.
     # setup_env_vars
 
     # Start build
     try:
-        cmd = ['cmake']+cmake_flags+compiler_flags+[src_path]
+        cmake_flags = get_cmake_flags()
+        cmd = ['cmake']+cmake_flags+[src_path]
         sp.check_call(cmd)
         sp.check_call(['make'])
         if install:
